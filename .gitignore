@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+.vscode/
+
+# Env / secrets
+.env
+.env.*
+
+# Logs
+*.log
+
+# Node
+node_modules/
+
+# Build artifacts
+/dist/
+/build/
+
+# Helm / K8s temp
+charts/
+
+# Local tooling
+.tmp/
+.tmp/

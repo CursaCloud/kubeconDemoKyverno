@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: node-inspector
+  namespace: observability
+  labels:
+    app: node-inspector
+    owner: sre
+spec:
+  containers:
+    - name: inspector
+      image: busybox:1.36
+      command: ["/bin/sh", "-c", "sleep 3600"]
+      securityContext:
+        privileged: true

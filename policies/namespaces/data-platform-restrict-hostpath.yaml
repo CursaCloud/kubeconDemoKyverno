@@ -1,0 +1,21 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: data-platform-restrict-hostpath
+  namespace: data-platform
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: disallow-hostpath-volumes
+      match:
+        resources:
+          kinds:
+            - Pod
+      validate:
+        message: "hostPath volumes are not allowed."
+        pattern:
+          spec:
+            =(volumes):
+              - name: "*"
+                !hostPath: "*"

@@ -1,0 +1,25 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: payments-require-labels
+  namespace: payments
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-app-and-owner-labels
+      match:
+        resources:
+          kinds:
+            - Deployment
+            - StatefulSet
+            - DaemonSet
+            - Job
+            - CronJob
+      validate:
+        message: "Workloads must include 'app' and 'owner' labels."
+        pattern:
+          metadata:
+            labels:
+              app: "?*"
+              owner: "?*"
