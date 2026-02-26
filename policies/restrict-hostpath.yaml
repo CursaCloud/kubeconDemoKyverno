@@ -17,4 +17,4 @@ spec:
           spec:
             =(volumes):
               - name: "*"
-                !hostPath: "*"
+                X(hostPath): "*"
