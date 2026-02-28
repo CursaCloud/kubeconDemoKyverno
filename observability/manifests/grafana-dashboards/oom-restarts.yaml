@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-oom-restarts
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  oom-restarts.json: |
+    {
+      "uid": "k8s-oom-restarts",
+      "title": "K8s: OOMKilled + Restarts",
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "tags": ["kubernetes", "sre"],
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": "Prometheus",
+            "query": "label_values(kube_pod_container_status_restarts_total, namespace)",
+            "refresh": 1,
+            "includeAll": true,
+            "multi": true
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "table",
+          "title": "OOMKilled (last 1h)",
+          "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=~\"$namespace\"}[1h]))",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "OOMKilled (last 24h)",
+          "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=~\"$namespace\"}[24h]))",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Restarts (last 1h)",
+          "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[1h]))",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Restarts (last 24h)",
+          "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[24h]))",
+              "format": "table"
+            }
+          ]
+        }
+      ]
+    }

@@ -14,8 +14,11 @@ spec:
             - Pod
       validate:
         message: "hostPath volumes are not allowed."
-        pattern:
-          spec:
-            =(volumes):
-              - name: "*"
-                !hostPath: "*"
+        foreach:
+          - list: "request.object.spec.volumes"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.hostPath }}"
+                    operator: NotEquals
+                    value: null

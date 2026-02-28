@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-requests-limits
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  requests-limits.json: |
+    {
+      "uid": "k8s-req-limits",
+      "title": "K8s: Requests/Limits overview",
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "tags": ["kubernetes", "requests", "limits"],
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": "Prometheus",
+            "query": "label_values(kube_pod_container_resource_limits, namespace)",
+            "refresh": 1,
+            "includeAll": true,
+            "multi": true
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "table",
+          "title": "Requests (memory bytes)",
+          "gridPos": {"x": 0, "y": 0, "w": 12, "h": 9},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"})",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Limits (memory bytes)",
+          "gridPos": {"x": 12, "y": 0, "w": 12, "h": 9},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (kube_pod_container_resource_limits{resource=\"memory\", namespace=~\"$namespace\"})",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Usage/Limit ratio",
+          "gridPos": {"x": 0, "y": 9, "w": 24, "h": 9},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (container_memory_working_set_bytes{container!=\"\", image!=\"\", namespace=~\"$namespace\"}) / sum by (namespace,pod,container) (kube_pod_container_resource_limits{resource=\"memory\", namespace=~\"$namespace\"})",
+              "format": "table"
+            }
+          ]
+        }
+      ]
+    }

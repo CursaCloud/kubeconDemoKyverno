@@ -68,10 +68,26 @@ kubectl -n policy-reporter port-forward svc/policy-reporter-ui 8080:8080
 ```
 Then open `http://localhost:8080`.
 
+Phase 2: Observability (OTEL)
+```bash
+./scripts/install-observability.sh
+./scripts/verify-observability.sh
+```
+
+Access:
+```bash
+kubectl -n observability port-forward svc/kube-prom-stack-grafana 3000:80
+kubectl -n observability port-forward svc/kube-prom-stack-prometheus 9090:9090
+```
+
+Phase 2 details:
+- `observability/README.md`
+
 Cleanup
 ```bash
 ./scripts/cleanup-violations.sh
 ./scripts/remove-policies.sh
 ./scripts/cleanup-kyverno.sh
+./scripts/cleanup-observability.sh
 ./infra-install/cleanup-minikube.sh
 ```
