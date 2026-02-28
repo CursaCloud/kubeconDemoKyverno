@@ -13,7 +13,7 @@ data:
         type: prometheus
         access: proxy
         url: http://kube-prom-stack-prometheus.observability.svc:9090
-        isDefault: true
+        isDefault: false
         editable: true
       - name: Loki
         type: loki
