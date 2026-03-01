@@ -1,0 +1,24 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: orders-disallow-latest
+  namespace: orders
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: no-latest-tag
+      match:
+        resources:
+          kinds:
+            - Pod
+      validate:
+        message: "Images must not use the 'latest' tag."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+            initContainers:
+              - image: "!*:latest"
+            ephemeralContainers:
+              - image: "!*:latest"

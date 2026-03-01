@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: marketing-campaign
+  namespace: marketing
+  labels:
+    app: marketing-campaign
+    owner: growth
+spec:
+  containers:
+    - name: campaign
+      image: nginx:1.25
