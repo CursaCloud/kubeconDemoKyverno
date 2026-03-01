@@ -1,0 +1,259 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-app-payments-payments-api
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  app-payments-payments-api.json: |
+    {
+      "uid": "app-payments-payments-api",
+      "title": "App: payments-api (payments/payments-api)",
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "tags": [
+        "kubernetes",
+        "app",
+        "payments"
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "constant",
+            "hide": 2,
+            "query": "payments",
+            "label": "namespace"
+          },
+          {
+            "name": "workload",
+            "type": "constant",
+            "hide": 2,
+            "query": "payments-api",
+            "label": "workload"
+          },
+          {
+            "name": "workload_kind",
+            "type": "constant",
+            "hide": 2,
+            "query": "Deployment",
+            "label": "workload_kind"
+          },
+          {
+            "name": "pod",
+            "type": "query",
+            "datasource": "Prometheus",
+            "query": "label_values(kube_pod_owner{namespace=\"$namespace\", owner_kind=\"$workload_kind\", owner_name=\"$workload\"}, pod)",
+            "refresh": 1,
+            "includeAll": true,
+            "multi": true
+          },
+          {
+            "name": "container",
+            "type": "query",
+            "datasource": "Prometheus",
+            "query": "label_values(kube_pod_container_info{namespace=\"$namespace\", pod=~\"$pod\"}, container)",
+            "refresh": 1,
+            "includeAll": true,
+            "multi": true
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Replicas desired vs available",
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 24,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "kube_deployment_spec_replicas{namespace=\"$namespace\", deployment=\"$workload\"} or kube_statefulset_replicas{namespace=\"$namespace\", statefulset=\"$workload\"}",
+              "legendFormat": "desired"
+            },
+            {
+              "expr": "kube_deployment_status_replicas_available{namespace=\"$namespace\", deployment=\"$workload\"} or kube_statefulset_status_replicas_ready{namespace=\"$namespace\", statefulset=\"$workload\"}",
+              "legendFormat": "available"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Restarts (last 1h)",
+          "gridPos": {
+            "x": 0,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\", pod=~\"$pod\"}[1h]))",
+              "legendFormat": "{{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Restarts (last 24h)",
+          "gridPos": {
+            "x": 12,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\", pod=~\"$pod\"}[24h]))",
+              "legendFormat": "{{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "OOMKilled count (last 1h)",
+          "gridPos": {
+            "x": 0,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=\"$namespace\", pod=~\"$pod\"}[1h]))",
+              "legendFormat": "{{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "OOMKilled count (last 24h)",
+          "gridPos": {
+            "x": 12,
+            "y": 16,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=\"$namespace\", pod=~\"$pod\"}[24h]))",
+              "legendFormat": "{{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Memory working set (current)",
+          "gridPos": {
+            "x": 0,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=})",
+              "legendFormat": "{{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Memory p95 (1h / 24h)",
+          "gridPos": {
+            "x": 12,
+            "y": 24,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.95, container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=}[1h])",
+              "legendFormat": "p95 1h {{pod}}/{{container}}"
+            },
+            {
+              "expr": "quantile_over_time(0.95, container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=}[24h])",
+              "legendFormat": "p95 24h {{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Usage vs limits (memory)",
+          "gridPos": {
+            "x": 0,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=})",
+              "legendFormat": "usage {{pod}}/{{container}}"
+            },
+            {
+              "expr": "sum by (pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
+              "legendFormat": "limit {{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Usage/limit ratio (memory)",
+          "gridPos": {
+            "x": 12,
+            "y": 32,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=}) / sum by (pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
+              "legendFormat": "ratio {{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "CPU usage vs requests",
+          "gridPos": {
+            "x": 0,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "sum by (pod,container) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod\", container!=}[5m]))",
+              "legendFormat": "usage {{pod}}/{{container}}"
+            },
+            {
+              "expr": "sum by (pod,container) (kube_pod_container_resource_requests{namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
+              "legendFormat": "request {{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "logs",
+          "title": "Logs (Loki)",
+          "datasource": "Loki",
+          "gridPos": {
+            "x": 12,
+            "y": 40,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "{namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"}"
+            }
+          ]
+        }
+      ]
+    }

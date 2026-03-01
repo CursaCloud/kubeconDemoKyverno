@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-k8s-overview-apps
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  k8s-overview-apps.json: |
+    {
+      "uid": "k8s-overview-apps",
+      "title": "Overview: Top Apps",
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "tags": [
+        "kubernetes",
+        "overview"
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": "Prometheus",
+            "query": "label_values(kube_pod_info, namespace)",
+            "refresh": 1,
+            "includeAll": true,
+            "multi": true
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "table",
+          "title": "Top apps by restarts (last 1h)",
+          "gridPos": {
+            "x": 0,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (owner_name) (increase(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}[1h]) * on(namespace,pod) group_left(owner_name, owner_kind) kube_pod_owner{owner_kind=~\"Deployment|StatefulSet\"}))",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Top apps by OOMKilled (last 24h)",
+          "gridPos": {
+            "x": 12,
+            "y": 0,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (owner_name) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=~\"$namespace\"}[24h]) * on(namespace,pod) group_left(owner_name, owner_kind) kube_pod_owner{owner_kind=~\"Deployment|StatefulSet\"}))",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "Top apps by memory p95 (last 1h)",
+          "gridPos": {
+            "x": 0,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "targets": [
+            {
+              "expr": "topk(10, sum by (owner_name) (quantile_over_time(0.95, container_memory_working_set_bytes{namespace=~\"$namespace\", container!=}[1h]) * on(namespace,pod) group_left(owner_name, owner_kind) kube_pod_owner{owner_kind=~\"Deployment|StatefulSet\"}))",
+              "format": "table"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "Kyverno violations (TODO)",
+          "gridPos": {
+            "x": 12,
+            "y": 8,
+            "w": 12,
+            "h": 8
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "Kyverno metrics not detected in Prometheus. TODO: expose Kyverno metrics endpoint and add ServiceMonitor to scrape policy violations."
+          }
+        }
+      ]
+    }
