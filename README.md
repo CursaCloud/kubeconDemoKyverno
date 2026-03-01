@@ -21,32 +21,37 @@ Examples:
 MINIKUBE_CPUS=6 MINIKUBE_MEMORY=8g ./infra-install/install-minikube.sh demo-02
 ```
 
-Step 2: Install Kyverno + UI (Policy Reporter)
+Step 2: Install metrics-server (required for `kubectl top`)
+```bash
+./scripts/install-metrics-server.sh
+```
+
+Step 3: Install Kyverno + UI (Policy Reporter)
 ```bash
 ./scripts/install-kyverno.sh
 ```
 
-Step 3: Create demo namespaces
+Step 4: Create demo namespaces
 ```bash
 ./scripts/apply-namespaces.sh
 ```
 
-Step 4: Apply base policies (cluster)
+Step 5: Apply base policies (cluster)
 ```bash
 ./scripts/apply-policies.sh
 ```
 
-Step 5: Apply namespace policies
+Step 6: Apply namespace policies
 ```bash
 ./scripts/apply-namespace-policies.sh
 ```
 
-Step 6: Generate violations (for UI activity)
+Step 7: Generate violations (for UI activity)
 ```bash
 ./scripts/apply-violations.sh
 ```
 
-Step 7: Access the UI (2 options)
+Step 8: Access the UI (2 options)
 
 Option A: LoadBalancer with `minikube tunnel`
 1) Switch the service to LoadBalancer (if the chart does not expose it by default):

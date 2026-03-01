@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 kubectl create namespace "${OBS_NS}" 2>/dev/null || true
 
+"${SCRIPT_DIR}/install-metrics-server.sh"
 "${SCRIPT_DIR}/install-prometheus.sh"
 "${SCRIPT_DIR}/install-loki.sh"
 "${SCRIPT_DIR}/install-otel-collector.sh"

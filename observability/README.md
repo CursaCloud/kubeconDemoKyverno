@@ -3,6 +3,7 @@
 Goal: install a lightweight stack on Minikube to collect metrics and logs, and enable OTLP for apps that want to emit signals.
 
 Components
+- metrics-server (cluster metrics API for `kubectl top`)
 - Prometheus + Grafana + kube-state-metrics (kube-prometheus-stack)
 - Loki + Promtail (minimum viable logs)
 - OTEL Collector (OTLP gateway + Prometheus exporter + Loki exporter)
@@ -15,6 +16,7 @@ Namespace
 ```bash
 ./scripts/install-observability.sh
 ```
+Note: this flow also installs/updates `metrics-server`.
 
 Optional (traces)
 ```bash
