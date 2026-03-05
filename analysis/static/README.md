@@ -1,40 +1,40 @@
 # Static Analysis - Kyverno PolicyReports
 
-Este modulo forma parte del demo y sirve para medir friccion de politicas Kyverno en el cluster.
+This module is part of the demo and is used to measure Kyverno policy friction in the cluster.
 
-## Que hace
+## What It Does
 
-El script [`main.py`](/Users/oscar.castillo/Documents/Personal/KubeCon_2026_KyvernoCon/Demo/kubeconDemoKyverno/analysis/static/main.py):
+The script [`main.py`](/Users/oscar.castillo/Documents/Personal/KubeCon_2026_KyvernoCon/Demo/kubeconDemoKyverno/analysis/static/main.py):
 
-1. Ejecuta `kubectl get policyreports -A -o json`.
-2. Agrupa resultados por `namespace` y `policy`.
-3. Cuenta violaciones por policy.
-4. Marca `Friction Detected` si una policy supera el umbral definido en `THRESHOLD` (actual: `5`).
+1. Runs `kubectl get policyreports -A -o json`.
+2. Groups results by `namespace` and `policy`.
+3. Counts violations per policy.
+4. Marks `Friction Detected` if a policy exceeds the threshold defined in `THRESHOLD` (current: `5`).
 
-## Prerequisitos
+## Prerequisites
 
 - Python 3
-- `kubectl` instalado
-- Acceso al cluster del demo con:
+- `kubectl` installed
+- Access to the demo cluster with:
   - `KUBECONFIG=~/.kube/minikube-config`
 
-## Uso
+## Usage
 
-Desde la raiz del repo:
+From the repo root:
 
 ```bash
 KUBECONFIG=~/.kube/minikube-config python3 analysis/static/main.py
 ```
 
-## Ejemplo de interpretacion
+## Interpretation Example
 
-Si la salida muestra:
+If the output shows:
 
 - `Namespace: observability`
 - `disallow-latest-tag: 26 -> Friction Detected`
 
-significa que en `observability` esa policy esta bloqueando/advirtiendo con alta frecuencia, por encima del umbral de friccion definido para el demo.
+it means that in `observability` this policy is blocking/warning at high frequency, above the friction threshold defined for the demo.
 
-## Nota para la demo
+## Demo Note
 
-Este reporte es ideal para abrir la narrativa de "donde duele la adopcion de politicas" antes de mostrar remediacion, excepciones o ajustes de enforcement.
+This report is ideal to start the narrative of "where policy adoption hurts" before showing remediation, exceptions, or enforcement tuning.
