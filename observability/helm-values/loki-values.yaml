@@ -1,0 +1,56 @@
+deploymentMode: SingleBinary
+
+loki:
+  auth_enabled: false
+  useTestSchema: true
+  commonConfig:
+    path_prefix: /tmp/loki
+    replication_factor: 1
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /tmp/loki/chunks
+      rules_directory: /tmp/loki/rules
+  ruler:
+    storage:
+      type: local
+    wal:
+      dir: /tmp/loki/ruler-wal
+  storage_config:
+    bloom_shipper:
+      working_directory: /tmp/loki/data/bloomshipper
+  limits_config:
+    retention_period: 7d
+
+singleBinary:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  persistence:
+    enabled: false
+
+backend:
+  replicas: 0
+
+read:
+  replicas: 0
+
+write:
+  replicas: 0
+
+resultsCache:
+  enabled: false
+
+chunksCache:
+  enabled: false
+
+monitoring:
+  selfMonitoring:
+    enabled: false
+  lokiCanary:
+    enabled: false

@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-memory-usage
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  memory-usage.json: |
+    {
+      "uid": "k8s-mem-usage",
+      "title": "K8s: Memory usage p95 vs limits",
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "30s",
+      "tags": ["kubernetes", "memory"],
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "type": "query",
+            "datasource": "Prometheus",
+            "query": "label_values(container_memory_working_set_bytes, namespace)",
+            "refresh": 1,
+            "includeAll": true,
+            "multi": true
+          }
+        ]
+      },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Working set (bytes)",
+          "gridPos": {"x": 0, "y": 0, "w": 24, "h": 9},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (container_memory_working_set_bytes{container!=\"\", image!=\"\", namespace=~\"$namespace\"})",
+              "legendFormat": "{{namespace}}/{{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "p95 working set (last 1h)",
+          "gridPos": {"x": 0, "y": 9, "w": 24, "h": 9},
+          "targets": [
+            {
+              "expr": "quantile_over_time(0.95, container_memory_working_set_bytes{container!=\"\", image!=\"\", namespace=~\"$namespace\"}[1h])",
+              "legendFormat": "{{namespace}}/{{pod}}/{{container}}"
+            }
+          ]
+        },
+        {
+          "type": "timeseries",
+          "title": "Limits vs requests (bytes)",
+          "gridPos": {"x": 0, "y": 18, "w": 24, "h": 9},
+          "targets": [
+            {
+              "expr": "sum by (namespace,pod,container) (kube_pod_container_resource_limits{resource=\"memory\", namespace=~\"$namespace\"})",
+              "legendFormat": "limit {{namespace}}/{{pod}}/{{container}}"
+            },
+            {
+              "expr": "sum by (namespace,pod,container) (kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"})",
+              "legendFormat": "request {{namespace}}/{{pod}}/{{container}}"
+            }
+          ]
+        }
+      ]
+    }

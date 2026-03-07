@@ -1,50 +1,153 @@
 # kubeconDemoKyverno
 
-Demo to analyze Kyverno policy friction using Kubernetes `PolicyReport`.
+End-to-end demo for Kyverno governance in a real Minikube environment:
+- deploy a cluster with intentionally inconsistent workloads,
+- observe policy friction with Policy Reporter UI and MCP analysis,
+- generate actionable recommendations and reusable policy templates,
+- enforce non-negotiable CIS/security controls.
 
-## Structure
+## Demo Scope
 
-- `analysis/static/main.py`: script that queries `policyreports` and summarizes violations by namespace/policy.
-- `analysis/static/README.md`: specific usage guide for static analysis.
+This repository covers:
+- Cluster bootstrap and teardown.
+- Kyverno installation and policy rollout.
+- Violation generation for realistic governance friction.
+- UI-based and CLI-based analysis.
+- Static analysis (`analysis/static/main.py`) with:
+  - friction detection by namespace/policy,
+  - non-negotiable policy classification,
+  - recommendations,
+  - suggested Kyverno YAML templates with business placeholders,
+  - file generation to `analysis/static/generated-policies/`.
+- MCP analysis prompt catalog (`analysis/mcp/prompts.md`) with:
+  - non-negotiable vs tunable policy classification,
+  - recommendation prompts,
+  - policy-template generation prompts.
 
-## Manual Analysis Objective
+## Prerequisites
 
-This analysis is intended to quickly answer:
+- `kubectl`, `minikube`, `helm`, `python3` in `PATH`.
+- Optional (for MCP flow): `kyverno-mcp` installed.
 
-- which namespaces have the highest policy-driven operational friction
-- which policies concentrate the most violations
-- where to prioritize enforcement tuning, remediation, or exceptions
+## Environment
 
-## Demo Flow (Phase 3)
-
-1. Connect to the local demo cluster (Minikube) using:
-   - `KUBECONFIG=~/.kube/minikube-config`
-2. Run the analyzer:
-   - `python3 analysis/static/main.py`
-3. Present the result by namespace:
-   - total violations
-   - highest-friction policies
-   - alert when a policy exceeds the threshold (`THRESHOLD=5`, rule `count > 5`)
-
-## Recommended Execution
+Use the demo kubeconfig when running commands:
 
 ```bash
-KUBECONFIG=~/.kube/minikube-config python3 analysis/static/main.py
+export KUBECONFIG=~/.kube/minikube-config
 ```
 
-## Expected Result
+## Setup Flow (Cluster + Policies + Violations)
 
-The script prints a summary like:
+1. Create the cluster:
+```bash
+./infra-install/install-minikube.sh
+```
 
-- `Namespace: observability`
-- `Total Violations: 137`
-- Policies with high counts marked as `Friction Detected`
+2. Install metrics server:
+```bash
+./scripts/install-metrics-server.sh
+```
 
-This makes it easy to explain which namespaces and policies are generating the most operational friction in the cluster.
+3. Install Kyverno + Policy Reporter:
+```bash
+./scripts/install-kyverno.sh
+```
 
-## Current Scope
+4. Create demo namespaces:
+```bash
+./scripts/apply-namespaces.sh
+```
 
-- counting by namespace/policy based on `PolicyReport`
-- console output for manual review (no CSV/JSON export)
-- fixed in-code threshold (`THRESHOLD = 5`)
-- no severity/result differentiation (`fail`, `warn`, `pass`)
+5. Apply cluster and namespace policies:
+```bash
+./scripts/apply-policies.sh
+./scripts/apply-namespace-policies.sh
+```
+
+6. Generate violations:
+```bash
+./scripts/apply-violations.sh
+```
+
+## Access Policy Reporter UI
+
+Option A (LoadBalancer + tunnel):
+```bash
+kubectl -n policy-reporter patch svc policy-reporter-ui -p '{"spec":{"type":"LoadBalancer"}}'
+minikube tunnel
+kubectl -n policy-reporter get svc policy-reporter-ui
+```
+
+Option B (port-forward):
+```bash
+kubectl -n policy-reporter port-forward svc/policy-reporter-ui 8080:8080
+```
+Open `http://localhost:8080`.
+
+## Static Analysis Flow
+
+Run:
+
+```bash
+python3 analysis/static/main.py
+```
+
+What it outputs:
+- violation summary by namespace and policy,
+- top friction policies,
+- non-negotiable (CIS/security) policy section,
+- actionable recommendations,
+- suggested policy templates with placeholders,
+- generated YAML file list.
+
+Generated files:
+- `analysis/static/generated-policies/*.yaml`
+
+## MCP Analysis Flow
+
+Start MCP server:
+
+```bash
+./analysis/mcp/run-kyverno-mcp.sh
+```
+
+Prompt catalog:
+- `analysis/mcp/prompts.md`
+
+Recommended prompts for this demo:
+1. `KYV-P01` baseline.
+2. `KYV-P02` friction threshold.
+3. `KYV-P11` non-negotiable classifier.
+4. `KYV-P12` recommendations + business-ready policy templates.
+5. `KYV-P06` executive trend framing.
+
+More MCP setup details:
+- `analysis/mcp/README.md`
+- `analysis/mcp/quickstart.md`
+
+## Observability (Optional)
+
+```bash
+./scripts/install-observability.sh
+./scripts/verify-observability.sh
+```
+
+Access:
+```bash
+kubectl -n observability port-forward svc/kube-prom-stack-grafana 3000:80
+kubectl -n observability port-forward svc/kube-prom-stack-prometheus 9090:9090
+```
+
+Details:
+- `observability/README.md`
+
+## Cleanup
+
+```bash
+./scripts/cleanup-violations.sh
+./scripts/remove-policies.sh
+./scripts/cleanup-kyverno.sh
+./scripts/cleanup-observability.sh
+./infra-install/cleanup-minikube.sh
+```
