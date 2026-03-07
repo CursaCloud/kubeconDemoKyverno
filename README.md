@@ -1,79 +1,133 @@
 # kubeconDemoKyverno
 
-Quick demo (Minikube + Kyverno + Policy Reporter UI)
+End-to-end demo for Kyverno governance in a real Minikube environment:
+- deploy a cluster with intentionally inconsistent workloads,
+- observe policy friction with Policy Reporter UI and MCP analysis,
+- generate actionable recommendations and reusable policy templates,
+- enforce non-negotiable CIS/security controls.
 
-Goal: create a real-world cluster with inconsistencies and use Kyverno + the UI to observe and improve governance over time.
+## Demo Scope
 
-Prerequisites
-- `kubectl`, `minikube`, and `helm` installed and in your PATH.
+This repository covers:
+- Cluster bootstrap and teardown.
+- Kyverno installation and policy rollout.
+- Violation generation for realistic governance friction.
+- UI-based and CLI-based analysis.
+- Static analysis (`analysis/static/main.py`) with:
+  - friction detection by namespace/policy,
+  - non-negotiable policy classification,
+  - recommendations,
+  - suggested Kyverno YAML templates with business placeholders,
+  - file generation to `analysis/static/generated-policies/`.
+- MCP analysis prompt catalog (`analysis/mcp/prompts.md`) with:
+  - non-negotiable vs tunable policy classification,
+  - recommendation prompts,
+  - policy-template generation prompts.
 
-Step 1: Create the cluster with Minikube
+## Prerequisites
+
+- `kubectl`, `minikube`, `helm`, `python3` in `PATH`.
+- Optional (for MCP flow): `kyverno-mcp` installed.
+
+## Environment
+
+Use the demo kubeconfig when running commands:
+
+```bash
+export KUBECONFIG=~/.kube/minikube-config
+```
+
+## Setup Flow (Cluster + Policies + Violations)
+
+1. Create the cluster:
 ```bash
 ./infra-install/install-minikube.sh
 ```
-Notes:
-- Default profile is `kyverno-demo` (pass another name as the first arg).
-- Tune resources with `MINIKUBE_CPUS` and `MINIKUBE_MEMORY`.
 
-Examples:
-```bash
-./infra-install/install-minikube.sh demo-01
-MINIKUBE_CPUS=6 MINIKUBE_MEMORY=8g ./infra-install/install-minikube.sh demo-02
-```
-
-Step 2: Install metrics-server (required for `kubectl top`)
+2. Install metrics server:
 ```bash
 ./scripts/install-metrics-server.sh
 ```
 
-Step 3: Install Kyverno + UI (Policy Reporter)
+3. Install Kyverno + Policy Reporter:
 ```bash
 ./scripts/install-kyverno.sh
 ```
 
-Step 4: Create demo namespaces
+4. Create demo namespaces:
 ```bash
 ./scripts/apply-namespaces.sh
 ```
 
-Step 5: Apply base policies (cluster)
+5. Apply cluster and namespace policies:
 ```bash
 ./scripts/apply-policies.sh
-```
-
-Step 6: Apply namespace policies
-```bash
 ./scripts/apply-namespace-policies.sh
 ```
 
-Step 7: Generate violations (for UI activity)
+6. Generate violations:
 ```bash
 ./scripts/apply-violations.sh
 ```
 
-Step 8: Access the UI (2 options)
+## Access Policy Reporter UI
 
-Option A: LoadBalancer with `minikube tunnel`
-1) Switch the service to LoadBalancer (if the chart does not expose it by default):
+Option A (LoadBalancer + tunnel):
 ```bash
 kubectl -n policy-reporter patch svc policy-reporter-ui -p '{"spec":{"type":"LoadBalancer"}}'
-```
-2) In another terminal, create the tunnel:
-```bash
 minikube tunnel
-```
-3) Get the external IP and open it in a browser:
-```bash
 kubectl -n policy-reporter get svc policy-reporter-ui
 ```
 
-Option B: Port-forward (quick and simple)
+Option B (port-forward):
 ```bash
 kubectl -n policy-reporter port-forward svc/policy-reporter-ui 8080:8080
 ```
-Then open `http://localhost:8080`.
+Open `http://localhost:8080`.
 
-Phase 2: Observability (OTEL)
+## Static Analysis Flow
+
+Run:
+
+```bash
+python3 analysis/static/main.py
+```
+
+What it outputs:
+- violation summary by namespace and policy,
+- top friction policies,
+- non-negotiable (CIS/security) policy section,
+- actionable recommendations,
+- suggested policy templates with placeholders,
+- generated YAML file list.
+
+Generated files:
+- `analysis/static/generated-policies/*.yaml`
+
+## MCP Analysis Flow
+
+Start MCP server:
+
+```bash
+./analysis/mcp/run-kyverno-mcp.sh
+```
+
+Prompt catalog:
+- `analysis/mcp/prompts.md`
+
+Recommended prompts for this demo:
+1. `KYV-P01` baseline.
+2. `KYV-P02` friction threshold.
+3. `KYV-P11` non-negotiable classifier.
+4. `KYV-P12` recommendations + business-ready policy templates.
+5. `KYV-P06` executive trend framing.
+
+More MCP setup details:
+- `analysis/mcp/README.md`
+- `analysis/mcp/quickstart.md`
+
+## Observability (Optional)
+
 ```bash
 ./scripts/install-observability.sh
 ./scripts/verify-observability.sh
@@ -85,10 +139,11 @@ kubectl -n observability port-forward svc/kube-prom-stack-grafana 3000:80
 kubectl -n observability port-forward svc/kube-prom-stack-prometheus 9090:9090
 ```
 
-Phase 2 details:
+Details:
 - `observability/README.md`
 
-Cleanup
+## Cleanup
+
 ```bash
 ./scripts/cleanup-violations.sh
 ./scripts/remove-policies.sh
