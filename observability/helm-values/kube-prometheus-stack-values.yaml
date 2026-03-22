@@ -40,6 +40,8 @@ grafana:
       enabled: true
       label: grafana_dashboard
       searchNamespace: observability
+      provider:
+        foldersFromFilesStructure: true
 
 nodeExporter:
   resources:

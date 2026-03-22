@@ -5,14 +5,16 @@ metadata:
   namespace: observability
   labels:
     grafana_dashboard: "1"
+  annotations:
+    k8s-sidecar-target-directory: "Demo/Apps"
 data:
   app-payments-payments-api.json: |
     {
       "uid": "app-payments-payments-api",
-      "title": "App: payments-api (payments/payments-api)",
+      "title": "Business App: payments-api (payments/payments-api)",
       "timezone": "browser",
       "schemaVersion": 38,
-      "version": 1,
+      "version": 2,
       "refresh": "30s",
       "tags": [
         "kubernetes",
@@ -65,7 +67,7 @@ data:
       "panels": [
         {
           "type": "timeseries",
-          "title": "Replicas desired vs available",
+          "title": "Replicas: desired vs available",
           "gridPos": {
             "x": 0,
             "y": 0,
@@ -75,21 +77,21 @@ data:
           "targets": [
             {
               "expr": "kube_deployment_spec_replicas{namespace=\"$namespace\", deployment=\"$workload\"} or kube_statefulset_replicas{namespace=\"$namespace\", statefulset=\"$workload\"}",
-              "legendFormat": "desired"
+              "legendFormat": "desired replicas"
             },
             {
               "expr": "kube_deployment_status_replicas_available{namespace=\"$namespace\", deployment=\"$workload\"} or kube_statefulset_status_replicas_ready{namespace=\"$namespace\", statefulset=\"$workload\"}",
-              "legendFormat": "available"
+              "legendFormat": "available replicas"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "Restarts (last 1h)",
+          "title": "Container restarts (last 1h)",
           "gridPos": {
             "x": 0,
             "y": 8,
-            "w": 12,
+            "w": 24,
             "h": 8
           },
           "targets": [
@@ -101,11 +103,11 @@ data:
         },
         {
           "type": "timeseries",
-          "title": "Restarts (last 24h)",
+          "title": "Container restarts (last 24h)",
           "gridPos": {
-            "x": 12,
-            "y": 8,
-            "w": 12,
+            "x": 0,
+            "y": 16,
+            "w": 24,
             "h": 8
           },
           "targets": [
@@ -117,39 +119,7 @@ data:
         },
         {
           "type": "timeseries",
-          "title": "OOMKilled count (last 1h)",
-          "gridPos": {
-            "x": 0,
-            "y": 16,
-            "w": 12,
-            "h": 8
-          },
-          "targets": [
-            {
-              "expr": "sum by (pod,container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=\"$namespace\", pod=~\"$pod\"}[1h]))",
-              "legendFormat": "{{pod}}/{{container}}"
-            }
-          ]
-        },
-        {
-          "type": "timeseries",
-          "title": "OOMKilled count (last 24h)",
-          "gridPos": {
-            "x": 12,
-            "y": 16,
-            "w": 12,
-            "h": 8
-          },
-          "targets": [
-            {
-              "expr": "sum by (pod,container) (max_over_time(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", namespace=\"$namespace\", pod=~\"$pod\"}[24h]))",
-              "legendFormat": "{{pod}}/{{container}}"
-            }
-          ]
-        },
-        {
-          "type": "timeseries",
-          "title": "Memory working set (current)",
+          "title": "Current memory usage by container",
           "gridPos": {
             "x": 0,
             "y": 24,
@@ -158,14 +128,14 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=})",
-              "legendFormat": "{{pod}}/{{container}}"
+              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"})",
+              "legendFormat": "memory usage {{pod}}/{{container}}"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "Memory p95 (1h / 24h)",
+          "title": "Memory p95 by container (1h vs 24h)",
           "gridPos": {
             "x": 12,
             "y": 24,
@@ -174,18 +144,18 @@ data:
           },
           "targets": [
             {
-              "expr": "quantile_over_time(0.95, container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=}[1h])",
-              "legendFormat": "p95 1h {{pod}}/{{container}}"
+              "expr": "quantile_over_time(0.95, container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[1h])",
+              "legendFormat": "memory p95 1h {{pod}}/{{container}}"
             },
             {
-              "expr": "quantile_over_time(0.95, container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=}[24h])",
-              "legendFormat": "p95 24h {{pod}}/{{container}}"
+              "expr": "quantile_over_time(0.95, container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[24h])",
+              "legendFormat": "memory p95 24h {{pod}}/{{container}}"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "Usage vs limits (memory)",
+          "title": "Memory usage vs memory limit",
           "gridPos": {
             "x": 0,
             "y": 32,
@@ -194,18 +164,18 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=})",
-              "legendFormat": "usage {{pod}}/{{container}}"
+              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"})",
+              "legendFormat": "memory usage {{pod}}/{{container}}"
             },
             {
               "expr": "sum by (pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
-              "legendFormat": "limit {{pod}}/{{container}}"
+              "legendFormat": "memory limit {{pod}}/{{container}}"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "Usage/limit ratio (memory)",
+          "title": "Memory usage to limit ratio",
           "gridPos": {
             "x": 12,
             "y": 32,
@@ -214,14 +184,14 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=}) / sum by (pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
-              "legendFormat": "ratio {{pod}}/{{container}}"
+              "expr": "sum by (pod,container) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}) / sum by (pod,container) (kube_pod_container_resource_limits{namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"})",
+              "legendFormat": "memory ratio {{pod}}/{{container}}"
             }
           ]
         },
         {
           "type": "timeseries",
-          "title": "CPU usage vs requests",
+          "title": "CPU usage vs CPU request",
           "gridPos": {
             "x": 0,
             "y": 40,
@@ -230,12 +200,12 @@ data:
           },
           "targets": [
             {
-              "expr": "sum by (pod,container) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod\", container!=}[5m]))",
-              "legendFormat": "usage {{pod}}/{{container}}"
+              "expr": "sum by (pod,container) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[5m]))",
+              "legendFormat": "cpu usage {{pod}}/{{container}}"
             },
             {
               "expr": "sum by (pod,container) (kube_pod_container_resource_requests{namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
-              "legendFormat": "request {{pod}}/{{container}}"
+              "legendFormat": "cpu request {{pod}}/{{container}}"
             }
           ]
         },

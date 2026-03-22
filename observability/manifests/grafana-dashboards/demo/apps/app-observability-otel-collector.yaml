@@ -5,16 +5,14 @@ metadata:
   namespace: observability
   labels:
     grafana_dashboard: "1"
-  annotations:
-    k8s-sidecar-target-directory: "Demo/Platform"
 data:
   app-observability-otel-collector.json: |
     {
       "uid": "app-observability-otel-collector",
-      "title": "Platform: otel-collector (observability/otel-collector)",
+      "title": "App: otel-collector (observability/otel-collector)",
       "timezone": "browser",
       "schemaVersion": 38,
-      "version": 2,
+      "version": 1,
       "refresh": "30s",
       "tags": [
         "kubernetes",

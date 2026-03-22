@@ -5,8 +5,6 @@ metadata:
   namespace: observability
   labels:
     grafana_dashboard: "1"
-  annotations:
-    k8s-sidecar-target-directory: "Demo/Cluster"
 data:
   k8s-overview-apps.json: |
     {

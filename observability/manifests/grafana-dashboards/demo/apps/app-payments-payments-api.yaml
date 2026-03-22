@@ -1,25 +1,23 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-dashboard-app-observability-otel-collector
+  name: grafana-dashboard-app-payments-payments-api
   namespace: observability
   labels:
     grafana_dashboard: "1"
-  annotations:
-    k8s-sidecar-target-directory: "Demo/Platform"
 data:
-  app-observability-otel-collector.json: |
+  app-payments-payments-api.json: |
     {
-      "uid": "app-observability-otel-collector",
-      "title": "Platform: otel-collector (observability/otel-collector)",
+      "uid": "app-payments-payments-api",
+      "title": "App: payments-api (payments/payments-api)",
       "timezone": "browser",
       "schemaVersion": 38,
-      "version": 2,
+      "version": 1,
       "refresh": "30s",
       "tags": [
         "kubernetes",
         "app",
-        "observability"
+        "payments"
       ],
       "templating": {
         "list": [
@@ -27,14 +25,14 @@ data:
             "name": "namespace",
             "type": "constant",
             "hide": 2,
-            "query": "observability",
+            "query": "payments",
             "label": "namespace"
           },
           {
             "name": "workload",
             "type": "constant",
             "hide": 2,
-            "query": "otel-collector",
+            "query": "payments-api",
             "label": "workload"
           },
           {

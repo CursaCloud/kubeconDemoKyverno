@@ -5,6 +5,8 @@ metadata:
   namespace: observability
   labels:
     grafana_dashboard: "1"
+  annotations:
+    k8s-sidecar-target-directory: "Misc"
 data:
   requests-limits.json: |
     {
