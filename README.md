@@ -1,143 +1,206 @@
 # kubeconDemoKyverno
 
-End-to-end demo for Kyverno governance in a real Minikube environment:
-- deploy a cluster with intentionally inconsistent workloads,
-- observe policy friction with Policy Reporter UI and MCP analysis,
-- generate actionable recommendations and reusable policy templates,
-- enforce non-negotiable CIS/security controls.
+End-to-end Kyverno project on Minikube with three main parts:
 
-## Demo Scope
+- cluster bootstrap and base component installation,
+- policies and workloads designed to generate realistic governance friction,
+- analysis and observability to explain that friction.
 
-This repository covers:
-- Cluster bootstrap and teardown.
-- Kyverno installation and policy rollout.
-- Violation generation for realistic governance friction.
-- UI-based and CLI-based analysis.
-- Static analysis (`analysis/static/main.py`) with:
-  - friction detection by namespace/policy,
-  - non-negotiable policy classification,
-  - recommendations,
-  - suggested Kyverno YAML templates with business placeholders,
-  - file generation to `analysis/static/generated-policies/`.
-- MCP analysis prompt catalog (`analysis/mcp/prompts.md`) with:
-  - non-negotiable vs tunable policy classification,
-  - recommendation prompts,
-  - policy-template generation prompts.
+## Repository Contents
+
+### Infrastructure and bootstrap
+
+- `infra-install/`
+  - create and clean up the Minikube profile.
+- `scripts/`
+  - install Kyverno, Policy Reporter, and the observability stack,
+  - apply and clean up namespaces, policies, and violation workloads.
+
+### Policies and violations
+
+- `namespaces/`
+  - working namespaces: `payments`, `orders`, `marketing`, `data-platform`, `observability`.
+- `policies/`
+  - base Kyverno policies,
+  - namespace-specific policies under `policies/namespaces/`.
+- `violations/`
+  - intentionally misconfigured manifests used to generate PolicyReports.
+
+### Observability
+
+- `observability/`
+  - Helm values for Prometheus, Loki, Promtail, and Tempo,
+  - manifests for the OTEL Collector, Grafana datasources, and dashboards,
+  - component-specific documentation in `observability/README.md`.
+
+### Analysis
+
+- `analysis/static/`
+  - Python analyzer that reads `PolicyReport` objects from the cluster and generates recommendations and YAML templates.
+- `analysis/governance-ai/`
+  - documentation and agent workflow for analysis, proposal authoring, and review,
+  - prompt catalogs and role guidance.
 
 ## Prerequisites
 
-- `kubectl`, `minikube`, `helm`, `python3` in `PATH`.
-- Optional (for MCP flow): `kyverno-mcp` installed.
+- `kubectl`
+- `minikube`
+- `helm`
+- `python3`
 
-## Environment
+Optional:
 
-Use the demo kubeconfig when running commands:
+- `kyverno` CLI for manual policy simulation
+- an MCP environment if you plan to use the workflow documented in `analysis/governance-ai/`
 
-```bash
-export KUBECONFIG=~/.kube/minikube-config
-```
+## Quick Start
 
-## Setup Flow (Cluster + Policies + Violations)
+The scripts assume that `kubectl` points to the correct Minikube context.
 
 1. Create the cluster:
+
 ```bash
 ./infra-install/install-minikube.sh
+kubectl config use-context kyverno-demo
 ```
 
-2. Install metrics server:
-```bash
-./scripts/install-metrics-server.sh
-```
+2. Install Kyverno and Policy Reporter:
 
-3. Install Kyverno + Policy Reporter:
 ```bash
 ./scripts/install-kyverno.sh
 ```
 
-4. Create demo namespaces:
+3. Create namespaces:
+
 ```bash
 ./scripts/apply-namespaces.sh
 ```
 
-5. Apply cluster and namespace policies:
+4. Apply policies:
+
 ```bash
 ./scripts/apply-policies.sh
 ./scripts/apply-namespace-policies.sh
 ```
 
-6. Generate violations:
+5. Apply workloads that generate violations:
+
 ```bash
 ./scripts/apply-violations.sh
 ```
 
-## Access Policy Reporter UI
+## Policy Visibility
 
-Option A (LoadBalancer + tunnel):
-```bash
-kubectl -n policy-reporter patch svc policy-reporter-ui -p '{"spec":{"type":"LoadBalancer"}}'
-minikube tunnel
-kubectl -n policy-reporter get svc policy-reporter-ui
-```
+Policy Reporter UI:
 
-Option B (port-forward):
 ```bash
 kubectl -n policy-reporter port-forward svc/policy-reporter-ui 8080:8080
 ```
+
 Open `http://localhost:8080`.
 
-## Static Analysis Flow
+## Static Analysis
 
-Run:
+The analyzer reads `PolicyReport` data and summarizes:
+
+- violations by namespace and policy,
+- policies with the most friction,
+- non-negotiable controls,
+- actionable recommendations,
+- automatically generated Kyverno policy templates.
+
+Run it from the repository root:
 
 ```bash
 python3 analysis/static/main.py
 ```
 
-What it outputs:
-- violation summary by namespace and policy,
-- top friction policies,
-- non-negotiable (CIS/security) policy section,
-- actionable recommendations,
-- suggested policy templates with placeholders,
-- generated YAML file list.
+Generated output:
 
-Generated files:
-- `analysis/static/generated-policies/*.yaml`
+- console summary of the analysis,
+- YAML files under `analysis/static/generated-policies/`.
 
-## MCP Analysis Flow
+Note: run it from the repo root so the generated output lands in that path instead of a duplicated nested directory.
 
-Prompt catalog:
-- `analysis/mcp/prompts.md`
+## Governance AI
 
-Recommended prompts for this demo:
-1. `KYV-P01` baseline.
-2. `KYV-P02` friction threshold.
-3. `KYV-P11` non-negotiable classifier.
-4. `KYV-P12` recommendations + business-ready policy templates.
-5. `KYV-P06` executive trend framing.
+The `analysis/governance-ai/` directory documents a workflow separate from the static analyzer:
 
-## Observability (Optional)
+1. an analyst interprets cluster signals,
+2. an author proposes Kyverno YAML,
+3. a reviewer validates scope and safety,
+4. a human decides whether to promote changes.
+
+Main entry points:
+
+- `analysis/governance-ai/README.md`
+- `analysis/governance-ai/prompts/catalog.md`
+
+## Observability
+
+Install:
 
 ```bash
 ./scripts/install-observability.sh
 ./scripts/verify-observability.sh
 ```
 
-Access:
+Quick access:
+
 ```bash
 kubectl -n observability port-forward svc/kube-prom-stack-grafana 3000:80
 kubectl -n observability port-forward svc/kube-prom-stack-prometheus 9090:9090
 ```
 
-Details:
-- `observability/README.md`
+Default Grafana credentials:
+
+- user: `admin`
+- password: `admin`
+
+Additional dashboards:
+
+```bash
+./scripts/generate-dashboards.sh
+./scripts/apply-dashboards.sh
+```
+
+See `observability/README.md` for more detail.
 
 ## Cleanup
 
+Remove violation workloads:
+
 ```bash
 ./scripts/cleanup-violations.sh
+```
+
+Remove policies:
+
+```bash
 ./scripts/remove-policies.sh
+```
+
+Remove Kyverno and Policy Reporter:
+
+```bash
 ./scripts/cleanup-kyverno.sh
+```
+
+Remove observability components:
+
+```bash
 ./scripts/cleanup-observability.sh
+```
+
+Delete the Minikube profile:
+
+```bash
 ./infra-install/cleanup-minikube.sh
 ```
+
+## Maintenance Notes
+
+- `README.md` now reflects the actual repository layout.
+- The MCP flow previously referenced does not live under `analysis/mcp/`; the current documentation is under `analysis/governance-ai/`.
+- Some auxiliary files still use historical filenames such as `analysis/governance-ai/README-demo.md`, `governance-ai-demo-notes.txt`, and the `observability/manifests/grafana-dashboards/demo/` directory, but their content has been normalized to project-oriented wording.
+- There is also untracked content under `analysis/static/analysis/`. I did not modify it.

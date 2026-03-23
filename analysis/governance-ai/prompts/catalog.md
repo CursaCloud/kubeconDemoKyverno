@@ -1,8 +1,6 @@
 # Governance AI Prompt Catalog
 
-Prompt catalog for the `governance-ai` workflow used in the talk:
-
-`Self-Healing Clusters: When Kyverno Writes Its Own Rules`
+Prompt catalog for the `governance-ai` workflow.
 
 This catalog replaces the old MCP-only framing with an agentic operating model.
 
@@ -71,7 +69,7 @@ Infer `NON_NEGOTIABLE` when names vary using keywords:
 - `non-root`
 - `read-only-root`
 
-## Recommended Demo Sequence
+## Recommended Prompt Sequence
 
 1. `GAI-P01` cluster baseline
 2. `GAI-P02` friction threshold
@@ -110,7 +108,7 @@ Do not apply changes.
 Expected output:
 - cluster-wide summary with namespace and policy ranking
 
-Suggested narrative:
+Suggested framing:
 - "Violations are not noise. They are signals."
 
 ---
@@ -146,7 +144,7 @@ Do not apply changes.
 Expected output:
 - namespace and policy list with decision and reasoning
 
-Suggested narrative:
+Suggested framing:
 - "We are not blaming workloads; we are detecting systemic friction."
 
 ---
@@ -190,7 +188,7 @@ Do not apply changes.
 Expected output:
 - classification table and prioritized remediation strategy
 
-Suggested narrative:
+Suggested framing:
 - "Security baselines are non-negotiable; friction is addressed through workload remediation and guided rollout."
 
 ---
@@ -266,7 +264,7 @@ Do not apply changes.
 Expected output:
 - concise report plus structured backlog for the Policy Author
 
-Suggested narrative:
+Suggested framing:
 - "From raw violations to reusable governance patterns aligned to operational reality."
 
 ---
@@ -347,9 +345,6 @@ Output sections:
 Expected output:
 - independent review report
 
-Suggested narrative:
-- "Agentic does not mean unsupervised. It means specialized roles with traceable decisions."
-
 ---
 
 ## GAI-P08 - Executive Trend Report
@@ -385,9 +380,9 @@ Expected output:
 
 ---
 
-## Demo Framing
+## Workflow Framing
 
-This catalog supports a demo with a clear control narrative:
+This catalog supports a workflow with a clear control narrative:
 
 - the cluster emits signals
 - the analyzer interprets them

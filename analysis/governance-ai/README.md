@@ -4,14 +4,9 @@ Agentic governance workflow for Kyverno.
 
 This workspace is intentionally separate from `analysis/static/`, which remains reserved for Python-based static analysis and should not be modified by this workflow.
 
-## Talk Context
-
-This project supports the demo narrative for:
-
-`Self-Healing Clusters: When Kyverno Writes Its Own Rules`
-
-The key idea is not autonomous policy application.
-The key idea is a controlled feedback loop where AI helps observe, analyze, propose, and review governance changes before a human approves anything.
+## Context
+This workflow is designed around a controlled feedback loop.
+AI helps observe, analyze, propose, and review governance changes before a human approves anything.
 
 ## Core Principle
 
@@ -265,7 +260,7 @@ See:
 - `runs/2026-03-20/02-review.md`
 - `runs/2026-03-20/run-summary.md`
 
-## Demo Framing
+## Operating Framing
 
 Useful way to explain this approach:
 
@@ -274,8 +269,6 @@ Useful way to explain this approach:
 - the policy author turns decisions into YAML
 - the reviewer protects against unsafe automation
 - the human remains the approval boundary
-
-This is the important framing:
 
 This is not "AI changes production."
 
